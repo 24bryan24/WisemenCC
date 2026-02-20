@@ -24,10 +24,19 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Set Firebase project ID
+        id: firebase
+        env:
+          FIREBASE_SA: ${{ secrets.wisemencoffee }}
+        run: |
+          echo "$FIREBASE_SA" > sa.json
+          PROJECT_ID=$(jq -r '.project_id' sa.json | tr '[:upper:]' '[:lower:]')
+          echo "project_id=$PROJECT_ID" >> $GITHUB_OUTPUT
+
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.wisemencoffee }}'
           channelId: live
-          projectId: ${{ secrets.wisemencoffee }}
+          projectId: ${{ steps.firebase.outputs.project_id }}
