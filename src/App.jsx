@@ -11,53 +11,39 @@ import {
   ChevronRight, 
   Plus, 
   Equal,
-  Crown
+  Crown,
+  Settings
 } from 'lucide-react';
+import AdminPanel from './AdminPanel';
+import { loadContent, saveContent, resetContent } from './contentStore';
 
 const App = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [content, setContent] = useState(loadContent);
 
-  // Handle scroll effect for navbar
+  const handleContentUpdate = (newContent) => {
+    setContent(newContent);
+    saveContent(newContent);
+  };
+
+  const handleResetContent = () => {
+    if (!window.confirm('Reset all content to defaults? This cannot be undone.')) return;
+    const reset = resetContent();
+    setContent(reset);
+  };
+
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const addToCart = () => {
-    setCartCount(prev => prev + 1);
-  };
+  const addToCart = () => setCartCount(prev => prev + 1);
 
-  const products = [
-    {
-      id: 1,
-      name: 'Costa Rica',
-      roast: 'Medium Roast',
-      price: 20.00,
-      image: 'https://images.unsplash.com/photo-1559525839-b184a4d698c7?auto=format&fit=crop&w=600&q=80',
-      description: 'Balanced and smooth with notes of honey and citrus.'
-    },
-    {
-      id: 2,
-      name: 'Ethiopia',
-      roast: 'Light Roast',
-      price: 20.00,
-      image: 'https://images.unsplash.com/photo-1587734195503-904fca47e0e9?auto=format&fit=crop&w=600&q=80',
-      description: 'Bright and floral with a delicate tea-like body.'
-    },
-    {
-      id: 3,
-      name: 'Sumatra',
-      roast: 'Dark Roast',
-      price: 20.00,
-      image: 'https://images.unsplash.com/photo-1611162458324-aae1eb4129a4?auto=format&fit=crop&w=600&q=80',
-      description: 'Earthy, full-bodied, and rich with a dark chocolate finish.'
-    }
-  ];
+  const products = content.products || [];
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] font-sans text-stone-800">
@@ -66,16 +52,14 @@ const App = () => {
       <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-stone-900 text-white shadow-xl py-3' : 'bg-transparent text-white py-5'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
-            {/* Logo */}
             <div className="flex items-center space-x-2">
               <Crown className="w-8 h-8 text-amber-500" />
               <div className="flex flex-col">
-                <span className="font-serif font-bold text-xl tracking-widest leading-none uppercase">Wise Men</span>
-                <span className="text-[0.65rem] tracking-[0.2em] text-amber-500 uppercase font-semibold">Coffee Co.</span>
+                <span className="font-serif font-bold text-xl tracking-widest leading-none uppercase">{content.logoTitle}</span>
+                <span className="text-[0.65rem] tracking-[0.2em] text-amber-500 uppercase font-semibold">{content.logoSubtitle}</span>
               </div>
             </div>
 
-            {/* Desktop Menu */}
             <div className="hidden md:flex space-x-8 items-center">
               <a href="#home" className="hover:text-amber-500 transition-colors font-medium text-sm tracking-wider uppercase">Home</a>
               <a href="#mission" className="hover:text-amber-500 transition-colors font-medium text-sm tracking-wider uppercase">Who We Are</a>
@@ -83,8 +67,14 @@ const App = () => {
               <a href="#contact" className="hover:text-amber-500 transition-colors font-medium text-sm tracking-wider uppercase">Contact</a>
             </div>
 
-            {/* Cart & Mobile Toggle */}
             <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setAdminOpen(true)}
+                className="p-2 hover:text-amber-500 transition-colors"
+                title="Edit site content"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
               <button className="relative p-2 hover:text-amber-500 transition-colors group">
                 <ShoppingBag className="w-6 h-6" />
                 {cartCount > 0 && (
@@ -103,7 +93,6 @@ const App = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 w-full bg-stone-900 text-white border-t border-stone-800 shadow-xl">
             <div className="px-4 pt-2 pb-6 space-y-1 flex flex-col">
@@ -111,6 +100,12 @@ const App = () => {
               <a href="#mission" className="block px-3 py-3 hover:bg-stone-800 rounded-md font-medium" onClick={() => setMobileMenuOpen(false)}>Who We Are</a>
               <a href="#shop" className="block px-3 py-3 hover:bg-stone-800 rounded-md font-medium" onClick={() => setMobileMenuOpen(false)}>Shop</a>
               <a href="#contact" className="block px-3 py-3 hover:bg-stone-800 rounded-md font-medium" onClick={() => setMobileMenuOpen(false)}>Contact</a>
+              <button
+                onClick={() => { setAdminOpen(true); setMobileMenuOpen(false); }}
+                className="block w-full text-left px-3 py-3 hover:bg-stone-800 rounded-md font-medium flex items-center gap-2"
+              >
+                <Settings className="w-4 h-4" /> Edit Site
+              </button>
             </div>
           </div>
         )}
@@ -120,7 +115,7 @@ const App = () => {
       <section id="home" className="relative h-screen flex items-center justify-center">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1497935586351-b67a49e012bf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80" 
+            src={content.images?.heroBackground || 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'} 
             alt="Pouring Coffee" 
             className="w-full h-full object-cover"
           />
@@ -128,19 +123,19 @@ const App = () => {
         </div>
         
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto mt-16">
-          <span className="block text-amber-500 font-semibold tracking-[0.2em] uppercase mb-4 animate-fade-in-up">Serving the Lord Since 2020</span>
+          <span className="block text-amber-500 font-semibold tracking-[0.2em] uppercase mb-4 animate-fade-in-up">{content.heroTagline}</span>
           <h1 className="text-5xl md:text-7xl font-serif font-bold text-white mb-6 leading-tight">
-            Quality Coffee.<br/>Kingdom Impact.
+            {content.heroHeadline1}<br/>{content.heroHeadline2}
           </h1>
           <p className="text-lg md:text-xl text-stone-200 mb-10 max-w-2xl mx-auto font-light">
-            Start your day with purpose. Every cup supports local churches and global missionaries.
+            {content.heroSubtext}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="#shop" className="bg-amber-600 hover:bg-amber-500 text-white px-8 py-4 rounded-sm font-bold tracking-wider uppercase transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-amber-500/25 flex items-center justify-center">
-              Shop Roasts <ChevronRight className="ml-2 w-5 h-5" />
+              {content.heroCtaPrimary} <ChevronRight className="ml-2 w-5 h-5" />
             </a>
             <a href="#mission" className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white px-8 py-4 rounded-sm font-bold tracking-wider uppercase transition-all flex items-center justify-center">
-              Our Mission
+              {content.heroCtaSecondary}
             </a>
           </div>
         </div>
@@ -150,25 +145,21 @@ const App = () => {
       <section id="mission" className="py-24 bg-stone-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-5xl font-serif font-bold mb-6 tracking-wide uppercase">Who We Are</h2>
+            <h2 className="text-3xl md:text-5xl font-serif font-bold mb-6 tracking-wide uppercase">{content.missionTitle}</h2>
             <div className="w-24 h-1 bg-amber-500 mx-auto mb-8"></div>
             <p className="text-lg md:text-xl leading-relaxed text-stone-300 font-light">
-              Our mission is to grow the Lord's Kingdom whether by supporting local church or missionaries. We believe quality coffee paired with this mission is an excellent way to give back to the Lord with an everyday item.
+              {content.missionParagraph}
             </p>
           </div>
 
-          {/* The Equation Layout */}
           <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-12 mt-16">
-            
-            {/* Part 1: Coffee */}
             <div className="relative group w-full lg:w-1/3 overflow-hidden rounded-lg shadow-2xl aspect-square">
-              <img src="https://images.unsplash.com/photo-1559525839-b184a4d698c7?auto=format&fit=crop&w=800&q=80" alt="Coffee Beans" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+              <img src={content.images?.equationCoffee || 'https://images.unsplash.com/photo-1559525839-b184a4d698c7?auto=format&fit=crop&w=800&q=80'} alt="Coffee Beans" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
               <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/40 to-transparent flex items-end p-8">
-                <h3 className="text-2xl font-serif font-bold text-amber-500 tracking-wider">QUALITY COFFEE</h3>
+                <h3 className="text-2xl font-serif font-bold text-amber-500 tracking-wider">{content.equationCoffee}</h3>
               </div>
             </div>
 
-            {/* Plus */}
             <div className="text-amber-500 hidden lg:block animate-pulse">
               <Plus className="w-12 h-12" />
             </div>
@@ -176,15 +167,13 @@ const App = () => {
               <Plus className="w-8 h-8" />
             </div>
 
-            {/* Part 2: Mission */}
             <div className="relative group w-full lg:w-1/3 overflow-hidden rounded-lg shadow-2xl aspect-square">
-              <img src="https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&w=800&q=80" alt="Bible" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+              <img src={content.images?.equationMission || 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&w=800&q=80'} alt="Bible" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
               <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/40 to-transparent flex items-end p-8">
-                <h3 className="text-2xl font-serif font-bold text-amber-500 tracking-wider">OUR MISSION</h3>
+                <h3 className="text-2xl font-serif font-bold text-amber-500 tracking-wider">{content.equationMission}</h3>
               </div>
             </div>
 
-            {/* Equals */}
             <div className="text-amber-500 hidden lg:block animate-pulse">
               <Equal className="w-12 h-12" />
             </div>
@@ -192,19 +181,17 @@ const App = () => {
               <Equal className="w-8 h-8" />
             </div>
 
-            {/* Result: Wise Men */}
             <div className="relative group w-full lg:w-1/3 overflow-hidden rounded-lg shadow-2xl aspect-square bg-stone-800 flex flex-col items-center justify-center p-8 border border-stone-700 hover:border-amber-500 transition-colors duration-300">
               <Crown className="w-20 h-20 text-amber-500 mb-6" />
               <h3 className="text-3xl font-serif font-bold text-white tracking-widest text-center uppercase leading-tight">
-                Wise Men<br/><span className="text-xl text-amber-500">Coffee Co.</span>
+                {content.equationResult}<br/><span className="text-xl text-amber-500">{content.equationResultSub}</span>
               </h3>
             </div>
-
           </div>
         </div>
       </section>
 
-      {/* Features/Values Section (New addition for "Feature Rich") */}
+      {/* Features Section */}
       <section className="py-16 bg-amber-50 border-b border-amber-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
@@ -212,22 +199,22 @@ const App = () => {
               <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-700">
                 <Coffee className="w-8 h-8" />
               </div>
-              <h4 className="text-xl font-bold font-serif mb-2 text-stone-800">Premium Roasts</h4>
-              <p className="text-stone-600">Carefully selected beans from the finest growing regions, roasted to perfection.</p>
+              <h4 className="text-xl font-bold font-serif mb-2 text-stone-800">{content.feature1Title}</h4>
+              <p className="text-stone-600">{content.feature1Desc}</p>
             </div>
             <div className="p-6">
               <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-700">
                 <Heart className="w-8 h-8" />
               </div>
-              <h4 className="text-xl font-bold font-serif mb-2 text-stone-800">Kingdom Driven</h4>
-              <p className="text-stone-600">Every purchase directly supports local churches and global missionary work.</p>
+              <h4 className="text-xl font-bold font-serif mb-2 text-stone-800">{content.feature2Title}</h4>
+              <p className="text-stone-600">{content.feature2Desc}</p>
             </div>
             <div className="p-6">
               <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-700">
                 <Globe className="w-8 h-8" />
               </div>
-              <h4 className="text-xl font-bold font-serif mb-2 text-stone-800">Ethically Sourced</h4>
-              <p className="text-stone-600">We ensure fair practices that honor the farmers and communities we partner with.</p>
+              <h4 className="text-xl font-bold font-serif mb-2 text-stone-800">{content.feature3Title}</h4>
+              <p className="text-stone-600">{content.feature3Desc}</p>
             </div>
           </div>
         </div>
@@ -237,8 +224,8 @@ const App = () => {
       <section id="shop" className="py-24 bg-[#FDFBF7]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <span className="text-amber-600 font-bold tracking-widest uppercase text-sm">Freshly Roasted</span>
-            <h2 className="text-4xl md:text-5xl font-serif font-bold mt-2 text-stone-900 uppercase">Shop Our Beans</h2>
+            <span className="text-amber-600 font-bold tracking-widest uppercase text-sm">{content.shopTagline}</span>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold mt-2 text-stone-900 uppercase">{content.shopTitle}</h2>
             <div className="w-24 h-1 bg-amber-500 mx-auto mt-6"></div>
           </div>
 
@@ -275,7 +262,7 @@ const App = () => {
           
           <div className="mt-16 text-center">
             <button className="bg-transparent border-2 border-stone-900 text-stone-900 hover:bg-stone-900 hover:text-white px-10 py-4 rounded-sm font-bold uppercase tracking-widest transition-all duration-300">
-              View All Products
+              {content.shopViewAll}
             </button>
           </div>
         </div>
@@ -284,17 +271,17 @@ const App = () => {
       {/* Newsletter Section */}
       <section className="py-20 bg-amber-600 text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">Join the Wise Men Community</h2>
-          <p className="text-amber-100 mb-8 max-w-2xl mx-auto">Subscribe to our newsletter for updates on new roasts, mission impacts, and exclusive offers.</p>
+          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">{content.newsletterTitle}</h2>
+          <p className="text-amber-100 mb-8 max-w-2xl mx-auto">{content.newsletterSubtext}</p>
           <form className="flex flex-col sm:flex-row max-w-lg mx-auto gap-2" onSubmit={(e) => e.preventDefault()}>
             <input 
               type="email" 
-              placeholder="Enter your email address" 
+              placeholder={content.newsletterPlaceholder} 
               className="flex-grow px-4 py-3 rounded-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900"
               required
             />
             <button type="submit" className="bg-stone-900 hover:bg-stone-800 text-white px-6 py-3 rounded-sm font-bold uppercase tracking-wider transition-colors">
-              Subscribe
+              {content.newsletterButton}
             </button>
           </form>
         </div>
@@ -302,10 +289,9 @@ const App = () => {
 
       {/* Footer / Contact Section */}
       <footer id="contact" className="relative bg-stone-950 text-stone-300 py-20 overflow-hidden">
-        {/* Background Image Layer */}
         <div className="absolute inset-0 z-0 opacity-20">
           <img 
-            src="https://images.unsplash.com/photo-1511556820780-d912e42b4980?auto=format&fit=crop&w=1920&q=80" 
+            src={content.images?.footerBackground || 'https://images.unsplash.com/photo-1511556820780-d912e42b4980?auto=format&fit=crop&w=1920&q=80'} 
             alt="Coffee Beans Background" 
             className="w-full h-full object-cover"
           />
@@ -313,60 +299,63 @@ const App = () => {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-            
-            {/* Brand Info */}
             <div className="col-span-1 lg:col-span-2">
               <div className="flex items-center space-x-2 mb-6">
                 <Crown className="w-8 h-8 text-amber-500" />
                 <div className="flex flex-col">
-                  <span className="font-serif font-bold text-2xl tracking-widest text-white uppercase leading-none">Wise Men</span>
-                  <span className="text-xs tracking-[0.2em] text-amber-500 uppercase font-semibold">Coffee Co.</span>
+                  <span className="font-serif font-bold text-2xl tracking-widest text-white uppercase leading-none">{content.footerBrandTitle}</span>
+                  <span className="text-xs tracking-[0.2em] text-amber-500 uppercase font-semibold">{content.footerBrandSubtitle}</span>
                 </div>
               </div>
               <p className="text-stone-400 mb-8 max-w-md">
-                Serving the Lord since 2020. Dedicated to providing premium coffee while supporting the growth of the Kingdom through local churches and missionaries worldwide.
+                {content.footerAbout}
               </p>
             </div>
 
-            {/* Quick Links */}
             <div>
-              <h4 className="text-white font-serif font-bold text-lg mb-6 uppercase tracking-wider">Quick Links</h4>
+              <h4 className="text-white font-serif font-bold text-lg mb-6 uppercase tracking-wider">{content.footerQuickLinksTitle}</h4>
               <ul className="space-y-4">
-                <li><a href="#home" className="hover:text-amber-500 transition-colors">Home</a></li>
-                <li><a href="#mission" className="hover:text-amber-500 transition-colors">About Us</a></li>
-                <li><a href="#mission" className="hover:text-amber-500 transition-colors">Who We Support</a></li>
-                <li><a href="#shop" className="hover:text-amber-500 transition-colors">Shop</a></li>
+                <li><a href="#home" className="hover:text-amber-500 transition-colors">{content.footerLinkHome}</a></li>
+                <li><a href="#mission" className="hover:text-amber-500 transition-colors">{content.footerLinkAbout}</a></li>
+                <li><a href="#mission" className="hover:text-amber-500 transition-colors">{content.footerLinkSupport}</a></li>
+                <li><a href="#shop" className="hover:text-amber-500 transition-colors">{content.footerLinkShop}</a></li>
               </ul>
             </div>
 
-            {/* Contact Info */}
             <div>
-              <h4 className="text-white font-serif font-bold text-lg mb-6 uppercase tracking-wider">Contact</h4>
+              <h4 className="text-white font-serif font-bold text-lg mb-6 uppercase tracking-wider">{content.footerContactTitle}</h4>
               <ul className="space-y-4">
                 <li className="flex items-start space-x-3">
                   <Mail className="w-5 h-5 text-amber-500 mt-0.5" />
-                  <a href="mailto:wisemencoffeeco@gmail.com" className="hover:text-amber-500 transition-colors break-all">
-                    wisemencoffeeco@gmail.com
+                  <a href={`mailto:${content.footerEmail}`} className="hover:text-amber-500 transition-colors break-all">
+                    {content.footerEmail}
                   </a>
                 </li>
                 <li className="flex items-center space-x-3 pt-2">
                   <a href="#" className="bg-amber-600 hover:bg-amber-500 p-2 rounded-sm text-white transition-colors">
                     <Instagram className="w-5 h-5" />
                   </a>
-                  <span className="text-sm">Follow our journey</span>
+                  <span className="text-sm">{content.footerInstagramText}</span>
                 </li>
               </ul>
             </div>
-            
           </div>
 
           <div className="border-t border-stone-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-stone-500">
-            <p>&copy; {new Date().getFullYear()} Wise Men Coffee Co. All rights reserved.</p>
-            <p className="mt-2 md:mt-0">Serving the Lord with every cup.</p>
+            <p>&copy; {new Date().getFullYear()} {content.footerCopyright}</p>
+            <p className="mt-2 md:mt-0">{content.footerTagline}</p>
           </div>
         </div>
       </footer>
 
+      {adminOpen && (
+        <AdminPanel
+          content={content}
+          onUpdate={handleContentUpdate}
+          onClose={() => setAdminOpen(false)}
+          onReset={handleResetContent}
+        />
+      )}
     </div>
   );
 };
